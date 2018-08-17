@@ -3,14 +3,19 @@
 # a ruby wrapper around all of the methods pastebin provides with its api
 # official docs from pastebin on their api can be found at https://pastebin.com/api
 require 'rest-client'
-module PasteBin
-  class PasteBinner
+
+module Pastebin
+  class Pastebinner
+    attr_reader :api_user_key
 
     # PasteBinner.new(api_dev_key)
-    def initialize(api_dev_key)
+    def initialize(api_dev_key, username, password)
       @api_dev_key = api_dev_key
+      @username = username
+      @password = password
       @base_api_url = 'https://pastebin.com/api'
       @scraping_api_url = 'https://scrape.pastebin.com'
+      @api_user_key = self.get_api_user_key
     end
 
     # this should be a hash of { endpoint_name: '/url_endpoint.php'}
@@ -36,21 +41,34 @@ module PasteBin
     # api_paste_private - this makes a paste public, unlisted, or private, public = 0, unlisted = 1, private = 2
     # api_paste_expire_date - this sets the expiration date of your paste, the values are explained further down the page
 
+    # example - params = { "api_dev_key": api_dev_key, "api_option": "paste", "api_paste_code": paste_data }
     def create_paste(params)
-      response = RestClient::Request.execute(
-        method: :post,
-        url: @base_api_url + ENDPOINTS[:post],
-        payload: params )
+      self.api_post(params)
     end
 
-    def get_api_user_key(username, password)
+    def get_api_user_key
       # returns a user session key that can be used as the api_user_key param
       @response ||= RestClient::Request.execute({
                                                   method: :post,
                                                   url: @base_api_url + ENDPOINTS[:login],
                                                   payload: { 'api_dev_key': @api_dev_key,
-                                                             'api_user_name': username,
-                                                             'api_user_password': password }})
+                                                             'api_user_name': @username,
+                                                             'api_user_password': @password }})
+    end
+
+    def list_user_pastes
+      params = { 'api_dev_key': @api_dev_key,
+                 'api_user_key': @api_user_key,
+                 'api_results_limit': '100',
+                 'api_option': 'list'}
+      self.api_post(params)
+    end
+
+    def api_post(params)
+      response = RestClient::Request.execute(
+        method: :post,
+        url: @base_api_url + ENDPOINTS[:post],
+        payload: params)
     end
 
     # params is optional for now. to query specific language ?lang=ruby as an example
@@ -75,22 +93,22 @@ end
 
 ######################## TESTING ####################################################
 #####################################################################################
-#
-# CREATE PASTE
-#
-# setup our api key
-api_dev_key = ENV['pastebin_api_key']
+
+#### INITIAL STEPS
 
 # setup our object and grab a session key
-pb =  PasteBin::PasteBinner.new(api_dev_key)
-#api_user_key = pb.get_api_user_key(ENV['pastebin_username'], ENV['pastebin_password'])
+pb =  Pastebin::Pastebinner.new(ENV['pastebin_api_key'], ENV['pastebin_username'], ENV['pastebin_password'])
 
-# here is some paste content
+#### CREATE PASTE
+# prepare some sample paste data to send
 paste_data = 'this is a test paste two two two.'
 # prepare our paste params
-#params = { "api_dev_key": api_dev_key, "api_option": "paste", "api_paste_code": paste_data }
 params = { "api_dev_key": api_dev_key, "api_option": "paste", "api_paste_code": paste_data }
+#puts pb.execute_query(:create_paste, params)
 
-#puts pb.create_paste(params)
-#public_pastes = pb.execute_query(pb.scrape_public_pastes)
-puts pb.execute_query(:create_paste, params)
+#### SCRAPE PUBLIC PASTES
+#public_pastes = pb.execute_query(:scrape_public_pastes)
+#puts public_pastes
+
+#### LIST USER PASTES
+#puts pb.execute_query(:list_user_pastes)
