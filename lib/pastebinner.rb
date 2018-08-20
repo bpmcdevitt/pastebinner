@@ -78,6 +78,7 @@ module Pastebin
         url: @scraping_api_url + ENDPOINTS[:scraping])
     end
 
+    private
     # this will be the main way to execute any of these methods. this has the exception handling taken care of.
     def execute_query(selector, *args)
       begin
