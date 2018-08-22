@@ -8,7 +8,6 @@ module Pastebin
   class Pastebinner
     attr_reader :api_user_key
 
-    # PasteBinner.new(api_dev_key)
     def initialize(api_dev_key, username, password)
       @api_dev_key = api_dev_key
       @username = username
@@ -43,7 +42,7 @@ module Pastebin
 
     # example - params = { "api_dev_key": api_dev_key, "api_option": "paste", "api_paste_code": paste_data }
     def create_paste(params)
-      self.api_post(params)
+      execute_query(:api_post, params)
     end
 
     def get_api_user_key
@@ -61,7 +60,7 @@ module Pastebin
                  'api_user_key': @api_user_key,
                  'api_results_limit': '100',
                  'api_option': 'list'}
-      self.api_post(params)
+      execute_query(:api_post, params)
     end
 
     def api_post(params)
@@ -78,6 +77,7 @@ module Pastebin
         url: @scraping_api_url + ENDPOINTS[:scraping])
     end
 
+    # keep this method private so we are not letting anyone run any method in our program
     private
     # this will be the main way to execute any of these methods. this has the exception handling taken care of.
     def execute_query(selector, *args)
@@ -99,13 +99,14 @@ end
 
 # setup our object and grab a session key
 pb =  Pastebin::Pastebinner.new(ENV['pastebin_api_key'], ENV['pastebin_username'], ENV['pastebin_password'])
+api_dev_key = ENV['pastebin_api_key']
 
 #### CREATE PASTE
 # prepare some sample paste data to send
 paste_data = 'this is a test paste two two two.'
 # prepare our paste params
 params = { "api_dev_key": api_dev_key, "api_option": "paste", "api_paste_code": paste_data }
-#puts pb.execute_query(:create_paste, params)
+puts pb.create_paste(params)
 
 #### SCRAPE PUBLIC PASTES
 #public_pastes = pb.execute_query(:scrape_public_pastes)
