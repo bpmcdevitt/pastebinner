@@ -4,9 +4,8 @@
 # official docs from pastebin on their api can be found at https://pastebin.com/api
 require 'rest-client'
 
-module Pastebin
-  class Pastebinner
-    attr_reader :api_user_key
+class Pastebinner
+ attr_accessor :api_dev_key, :username, :password
 
     def initialize(api_dev_key, username, password)
       @api_dev_key = api_dev_key
@@ -14,7 +13,6 @@ module Pastebin
       @password = password
       @base_api_url = 'https://pastebin.com/api'
       @scraping_api_url = 'https://scrape.pastebin.com'
-      @api_user_key = self.get_api_user_key
     end
 
     # this should be a hash of { endpoint_name: '/url_endpoint.php'}
@@ -45,9 +43,9 @@ module Pastebin
       execute_query(:api_post, params)
     end
 
-    def get_api_user_key
+    def api_user_key
       # returns a user session key that can be used as the api_user_key param
-      @response ||= RestClient::Request.execute({
+      @api_user_key ||= RestClient::Request.execute({
                                                   method: :post,
                                                   url: @base_api_url + ENDPOINTS[:login],
                                                   payload: { 'api_dev_key': @api_dev_key,
@@ -56,8 +54,8 @@ module Pastebin
     end
 
     def list_user_pastes
-      params = { 'api_dev_key': @api_dev_key,
-                 'api_user_key': @api_user_key,
+      params = { 'api_dev_key': api_dev_key,
+                 'api_user_key': api_user_key,
                  'api_results_limit': '100',
                  'api_option': 'list'
                }
@@ -65,7 +63,7 @@ module Pastebin
     end
 
     def list_trending_pastes
-      params = { 'api_dev_key': @api_dev_key,
+      params = { 'api_dev_key': api_dev_key,
                  'api_option': 'trend'
                }
       execute_query(:api_post, params)
@@ -73,12 +71,17 @@ module Pastebin
 
     # api_paste_key = this is the unique key of the paste data you want to delete.
     def delete_user_paste(api_paste_key)
-      params = { 'api_dev_key': @api_dev_key,
-                 'api_user_key': @api_user_key,
+      params = { 'api_dev_key': api_dev_key,
+                 'api_user_key': api_user_key,
                  'api_paste_key': api_paste_key,
                  'api_option': 'delete'
                }
       execute_query(:api_post, params)
+    end
+
+    def get_user_info
+      params = { 'api_dev_key': api_dev_key,
+               }
     end
 
     def api_post(params)
@@ -105,10 +108,9 @@ module Pastebin
         puts e.message
       end
     end
-
+    # make my own exception class 
+    # inherit ruby standard error class
   end
-
-end
 
 ######################## TESTING ####################################################
 #####################################################################################
@@ -116,19 +118,19 @@ end
 #### INITIAL STEPS
 
 # setup our object and grab a session key
-pb =  Pastebin::Pastebinner.new(ENV['pastebin_api_key'], ENV['pastebin_username'], ENV['pastebin_password'])
+pb =  Pastebinner.new(ENV['pastebin_api_key'], ENV['pastebin_username'], ENV['pastebin_password'])
 api_dev_key = ENV['pastebin_api_key']
 
 #### CREATE PASTE
 # prepare some sample paste data to send
-paste_data = 'this is a test paste two two two.'
+#paste_data = 'this is a test paste two two two.'
 # prepare our paste params
-params = { "api_dev_key": api_dev_key, "api_option": "paste", "api_paste_code": paste_data }
-puts pb.create_paste(params)
+#params = { "api_dev_key": api_dev_key, "api_option": "paste", "api_paste_code": paste_data }
+#puts pb.create_paste(params)
 
 #### SCRAPE PUBLIC PASTES
 #public_pastes = pb.execute_query(:scrape_public_pastes)
 #puts public_pastes
 
 #### LIST USER PASTES
-#puts pb.execute_query(:list_user_pastes)
+puts pb.scrape_public_pastes
