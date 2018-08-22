@@ -59,7 +59,25 @@ module Pastebin
       params = { 'api_dev_key': @api_dev_key,
                  'api_user_key': @api_user_key,
                  'api_results_limit': '100',
-                 'api_option': 'list'}
+                 'api_option': 'list'
+               }
+      execute_query(:api_post, params)
+    end
+
+    def list_trending_pastes
+      params = { 'api_dev_key': @api_dev_key,
+                 'api_option': 'trend'
+               }
+      execute_query(:api_post, params)
+    end
+
+    # api_paste_key = this is the unique key of the paste data you want to delete.
+    def delete_user_paste(api_paste_key)
+      params = { 'api_dev_key': @api_dev_key,
+                 'api_user_key': @api_user_key,
+                 'api_paste_key': api_paste_key,
+                 'api_option': 'delete'
+               }
       execute_query(:api_post, params)
     end
 
